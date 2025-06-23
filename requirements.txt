@@ -1,0 +1,6 @@
+bittensor==9.0.0
+pandas
+scikit-learn
+wandb
+tabulate
+python-dotenv
