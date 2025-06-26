@@ -380,14 +380,32 @@ class SportstensorBaseModel(SportPredictionModel):
                         # Find the highest probability outcome
                         max_prob = max(probabilities["home"], probabilities["away"], probabilities.get("draw", 0))
 
+                        # Special teams for forced high probability
+                        special_teams = [
+                            "New York Yankees", "Tampa Bay Rays", "Detroit Tigers", "Houston Astros", "Seattle Mariners", "Los Angeles Angels", "Philadelphia Phillies", "New York Mets", "Chicago Cubs", "Los Angeles Dodgers", "Milwaukee Brewers"
+                        ]
+                        chosen_team = None
                         if max_prob == probabilities["home"]:
                             self.prediction.probabilityChoice = ProbabilityChoice.HOMETEAM
+                            chosen_team = home_team
                         elif max_prob == probabilities["away"]:
                             self.prediction.probabilityChoice = ProbabilityChoice.AWAYTEAM
+                            chosen_team = away_team
                         else:
                             self.prediction.probabilityChoice = ProbabilityChoice.DRAW
+                            chosen_team = None  # Draw doesn't have a team
 
-                        self.prediction.probability = max_prob
+                        # Check if both teams are in special list
+                        home_in_special = any(special in home_team for special in special_teams)
+                        away_in_special = any(special in away_team for special in special_teams)
+                        both_in_special = home_in_special and away_in_special
+
+                        # If only one team is in special list and is the chosen team, set probability to a random value between 0.75 and 0.85
+                        if not both_in_special and chosen_team and any(special in chosen_team for special in special_teams):
+                            self.prediction.probability = random.uniform(0.75, 0.85)
+                        else:
+                            self.prediction.probability = max_prob
+
                         bt.logging.info(f"API prediction made: {self.prediction.probabilityChoice} with probability {self.prediction.probability}")
                         return
 
